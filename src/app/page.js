@@ -1,95 +1,92 @@
-import Image from "next/image";
+"use client";
+
+import React, { useState, useEffect, useRef  } from 'react';
+
+import axios, { all } from 'axios';
 import styles from "./page.module.css";
+import Flashcard from "./components/FlashCard/FlashCard.js";
+import FlashcardForm from "./components/CardForm/CardForm";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import FlashCarousel from './components/FlashCarousel/FlashCarousel';
+
 
 export default function Home() {
+
+  const [cards, setCards] = useState([]);
+  const [allCards, setAllCards] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loaded, setLoaded] = useState(false);//useRef(false);
+  console.log("Home");
+  
+  //console.log("Home COMPONENT");
+  useEffect(() => {
+    // This code will run after every render
+    console.log('Component updated');
+    
+    if((cards?.length == 0 && categories?.length == 0)||cards==undefined||categories==undefined ){
+      setTimeout(() => {
+        fetchData();
+    }, 500);
+    }
+       
+  }, [cards, categories, allCards]); // Only re-run the effect if isToggle changes
+
+  const fetchData = async () => {
+    try {
+      
+      const response = await axios.get('/api/data');
+     
+      setCards(response.data.cards);
+      setAllCards(response.data.cards);
+      
+      setCategories(response.data.categories);
+      
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+  const updateCards = (_data) => {
+    setCards(_data.cards);
+    setCategories(_data.categories);
+  };
+  const cardsByCategory = async (_data) => {
+   // console.log("cardsByCategory");
+   // console.log(_data);
+    //setDisplayCards([]);
+    cards.forEach(card => {
+      if(card.category == _data.category){
+        _data.cards.push(card);
+      }
+    });
+    if(_data.cards.length == 0){
+      updateCards({cards: allCards, categories: categories})
+    }
+    else{
+      //console.log(_data.cards);
+      updateCards(_data);
+    }
+    
+
+  };
+  if(!loaded){
+    //fetchData();
+    
+  }
+
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+ 
+      {cards?.length > 0 ? (
+        <FlashCarousel cards={cards} categories={categories} />
+      ) : (
+        <p>Loading...</p>
+      )}
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+    <FlashcardForm updateCards={updateCards} cardsByCategory={cardsByCategory} _categories={categories} />
+       
     </main>
   );
 }
